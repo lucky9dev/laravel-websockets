@@ -2,56 +2,91 @@
 
 namespace BeyondCode\LaravelWebSockets\Apps;
 
-use Illuminate\Support\Collection;
-
-class ConfigAppProvider implements AppProvider
+class ConfigAppManager implements AppManager
 {
-    /** @var Collection */
+    /**
+     * The list of apps.
+     *
+     * @var \Illuminate\Support\Collection
+     */
     protected $apps;
 
+    /**
+     * Initialize the class.
+     *
+     * @return void
+     */
     public function __construct()
     {
         $this->apps = collect(config('websockets.apps'));
     }
 
-    /**  @return array[\BeyondCode\LaravelWebSockets\AppProviders\App] */
+    /**
+     * Get all apps.
+     *
+     * @return array[\BeyondCode\LaravelWebSockets\Apps\App]
+     */
     public function all(): array
     {
         return $this->apps
             ->map(function (array $appAttributes) {
-                return $this->instanciate($appAttributes);
+                return $this->instantiate($appAttributes);
             })
             ->toArray();
     }
 
+    /**
+     * Get app by id.
+     *
+     * @param  string|int  $appId
+     * @return \BeyondCode\LaravelWebSockets\Apps\App|null
+     */
     public function findById($appId): ?App
     {
         $appAttributes = $this
             ->apps
             ->firstWhere('id', $appId);
 
-        return $this->instanciate($appAttributes);
+        return $this->instantiate($appAttributes);
     }
 
-    public function findByKey(string $appKey): ?App
+    /**
+     * Get app by app key.
+     *
+     * @param  string  $appKey
+     * @return \BeyondCode\LaravelWebSockets\Apps\App|null
+     */
+    public function findByKey($appKey): ?App
     {
         $appAttributes = $this
             ->apps
             ->firstWhere('key', $appKey);
 
-        return $this->instanciate($appAttributes);
+        return $this->instantiate($appAttributes);
     }
 
-    public function findBySecret(string $appSecret): ?App
+    /**
+     * Get app by secret.
+     *
+     * @param  string  $appSecret
+     * @return \BeyondCode\LaravelWebSockets\Apps\App|null
+     */
+    public function findBySecret($appSecret): ?App
     {
         $appAttributes = $this
             ->apps
             ->firstWhere('secret', $appSecret);
 
-        return $this->instanciate($appAttributes);
+        return $this->instantiate($appAttributes);
     }
 
-    protected function instanciate(?array $appAttributes): ?App
+    /**
+     * Map the app into an App instance.
+     *
+     * @param  array|null  $app
+     * @return \BeyondCode\LaravelWebSockets\Apps\App|null
+     */
+    protected function instantiate(?array $appAttributes): ?App
     {
         if (! $appAttributes) {
             return null;
@@ -78,7 +113,8 @@ class ConfigAppProvider implements AppProvider
         $app
             ->enableClientMessages($appAttributes['enable_client_messages'])
             ->enableStatistics($appAttributes['enable_statistics'])
-            ->setCapacity($appAttributes['capacity'] ?? null);
+            ->setCapacity($appAttributes['capacity'] ?? null)
+            ->setAllowedOrigins($appAttributes['allowed_origins'] ?? []);
 
         return $app;
     }
